@@ -3,4 +3,4 @@
 **Integrantes:**
 
 * Yan Ribeiro Nunes
-* Caio Leimig
+* Caio Leimig Rodrigues da Silva
