@@ -1,18 +1,18 @@
 package br.edu.cs.poo.ac.ordem.entidades;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
 @Setter
-@AllArgsConstructor
-public class Desktop extends Equipamento {
-    private boolean ehServidor;
 
-    public Desktop(String serial, String descricao, boolean ehNovo, double valorEstimado, boolean ehServidor) {
-        super(serial, descricao, ehNovo, valorEstimado);
-        this.ehServidor = ehServidor;
+public class Desktop extends Equipamento{
+
+    private boolean ehServido;
+
+    public Desktop(String Serial, String descricao, boolean ehNovo, double valorEstimado, boolean ehServido) {
+        super(Serial, descricao, ehNovo, valorEstimado);
+        this.ehServido = ehServido;
     }
 
     public String getIdTipo() {

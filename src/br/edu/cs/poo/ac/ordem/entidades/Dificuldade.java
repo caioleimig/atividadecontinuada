@@ -1,18 +1,21 @@
 package br.edu.cs.poo.ac.ordem.entidades;
 
-public enum Dificuldade {
-    NORMAL(1, "Normal"),
-    DIFICIL(2, "Difícil");
+import java.io.Serializable;
 
-    private final int codigo;
-    private final String nome;
+public enum Dificuldade implements Serializable {
 
-    private Dificuldade(int codigo, String nome) {
-        this.codigo = codigo;
-        this.nome = nome;
+    NORMAL(1,"Normal"),
+    DIFICIL(2,"Difícil");
+
+    private int codigo;
+    private String nome;
+
+    private Dificuldade(int codigo,String nome) {
+        this.codigo=codigo;
+        this.nome=nome;
     }
 
-    public int getCodigo() {
+    public int getCodigo(){
         return codigo;
     }
 
@@ -21,11 +24,14 @@ public enum Dificuldade {
     }
 
     public static Dificuldade getDificuldade(int codigo) {
-        for (Dificuldade d : Dificuldade.values()) {
-            if (d.getCodigo() == codigo) {
+
+        for(Dificuldade d : Dificuldade.values()){
+            if( d.getCodigo() == codigo) {
                 return d;
             }
         }
+
         return null;
     }
+
 }

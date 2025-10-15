@@ -1,9 +1,8 @@
 package br.edu.cs.poo.ac.ordem.mediators;
 
 import java.time.LocalDate;
-import java.util.HashMap;
-import java.util.Map;
 
+import br.edu.cs.poo.ac.ordem.daos.ClienteDAO;
 import br.edu.cs.poo.ac.ordem.entidades.Cliente;
 import br.edu.cs.poo.ac.ordem.entidades.Contato;
 import br.edu.cs.poo.ac.utils.ListaString;
@@ -13,10 +12,13 @@ import br.edu.cs.poo.ac.utils.ValidadorCPFCNPJ;
 
 public class ClienteMediator {
 
-    // --- Implementação do Padrão Singleton ---
     private static ClienteMediator instancia;
 
-    private ClienteMediator() { }
+    private ClienteDAO clienteDAO;
+
+    private ClienteMediator() {
+        clienteDAO = new ClienteDAO();
+    }
 
     public static ClienteMediator getInstancia() {
         if (instancia == null) {
@@ -25,40 +27,35 @@ public class ClienteMediator {
         return instancia;
     }
 
-    // --- Simulação do DAO (Banco de Dados em Memória) ---
-    private Map<String, Cliente> repositorio = new HashMap<>();
-
-    // --- Métodos de Negócio (CRUD) ---
+    // ---------- MÉTODOS PRINCIPAIS ---------- //
 
     public ResultadoMediator incluir(Cliente cliente) {
-        ResultadoMediator resultadoValidacao = validar(cliente);
-        if (!resultadoValidacao.isValidado()) {
-            return resultadoValidacao;
-        }
+        ResultadoMediator resValidacao = validar(cliente);
+        if (!resValidacao.isValidado()) return resValidacao;
 
-        if (repositorio.containsKey(cliente.getCpfCnpj())) {
+        Cliente existente = clienteDAO.buscar(cliente.getCpfCnpj());
+        if (existente != null) {
             ListaString erros = new ListaString();
             erros.adicionar("CPF/CNPJ já existente");
             return new ResultadoMediator(true, false, erros);
         }
 
-        repositorio.put(cliente.getCpfCnpj(), cliente);
+        clienteDAO.incluir(cliente);
         return new ResultadoMediator(true, true, new ListaString());
     }
 
     public ResultadoMediator alterar(Cliente cliente) {
-        ResultadoMediator resultadoValidacao = validar(cliente);
-        if (!resultadoValidacao.isValidado()) {
-            return resultadoValidacao;
-        }
+        ResultadoMediator resValidacao = validar(cliente);
+        if (!resValidacao.isValidado()) return resValidacao;
 
-        if (!repositorio.containsKey(cliente.getCpfCnpj())) {
+        Cliente existente = clienteDAO.buscar(cliente.getCpfCnpj());
+        if (existente == null) {
             ListaString erros = new ListaString();
             erros.adicionar("CPF/CNPJ inexistente");
             return new ResultadoMediator(true, false, erros);
         }
 
-        repositorio.put(cliente.getCpfCnpj(), cliente);
+        clienteDAO.alterar(cliente);
         return new ResultadoMediator(true, true, new ListaString());
     }
 
@@ -69,89 +66,96 @@ public class ClienteMediator {
             return new ResultadoMediator(false, false, erros);
         }
 
-        if (!repositorio.containsKey(cpfCnpj)) {
+        Cliente existente = clienteDAO.buscar(cpfCnpj);
+        if (existente == null) {
             ListaString erros = new ListaString();
             erros.adicionar("CPF/CNPJ inexistente");
             return new ResultadoMediator(true, false, erros);
         }
 
-        repositorio.remove(cpfCnpj);
+        clienteDAO.excluir(cpfCnpj);
         return new ResultadoMediator(true, true, new ListaString());
     }
 
     public Cliente buscar(String cpfCnpj) {
-        if (StringUtils.estaVazia(cpfCnpj)) {
-            return null;
-        }
-        return repositorio.get(cpfCnpj);
+        if (StringUtils.estaVazia(cpfCnpj)) return null;
+        return clienteDAO.buscar(cpfCnpj);
     }
 
+    // ---------- VALIDAÇÕES ---------- //
+
     public ResultadoMediator validar(Cliente cliente) {
-        ListaString mensagensErro = new ListaString();
+        ListaString erros = new ListaString();
 
         if (cliente == null) {
-            mensagensErro.adicionar("Cliente não informado");
-            return new ResultadoMediator(false, false, mensagensErro);
+            erros.adicionar("Cliente não informado");
+            return new ResultadoMediator(false, false, erros);
         }
 
-        // Validação do CPF/CNPJ
+        // CPF/CNPJ
         if (StringUtils.estaVazia(cliente.getCpfCnpj())) {
-            mensagensErro.adicionar("CPF/CNPJ não informado");
+            erros.adicionar("CPF/CNPJ não informado");
         } else {
-            ResultadoValidacaoCPFCNPJ resCpf = ValidadorCPFCNPJ.validarCPFCNPJ(cliente.getCpfCnpj());
-            if (resCpf.getErroValidacao() != null) {
-                switch (resCpf.getErroValidacao()) {
+            ResultadoValidacaoCPFCNPJ val = ValidadorCPFCNPJ.validarCPFCNPJ(cliente.getCpfCnpj());
+            if (val.getErroValidacao() != null) {
+                switch (val.getErroValidacao()) {
                     case CPF_CNPJ_NAO_E_CPF_NEM_CNPJ:
-                        mensagensErro.adicionar("Não é CPF nem CNJP");
+                        erros.adicionar("Não é CPF nem CNJP");
                         break;
                     case CPF_CNPJ_COM_DV_INVALIDO:
-                        mensagensErro.adicionar("CPF ou CNPJ com dígito verificador inválido");
+                        erros.adicionar("CPF ou CNPJ com dígito verificador inválido");
                         break;
                     default:
-                        mensagensErro.adicionar("CPF/CNPJ inválido");
+                        erros.adicionar("CPF/CNPJ inválido");
                         break;
                 }
             }
         }
 
-        // Validação do Nome
+        // Nome
         if (StringUtils.estaVazia(cliente.getNome())) {
-            mensagensErro.adicionar("Nome não informado");
-        } else if (cliente.getNome().length() > 50) {
-            mensagensErro.adicionar("Nome tem mais de 50 caracteres");
+            erros.adicionar("Nome não informado");
+        } else if (StringUtils.tamanhoExcedido(cliente.getNome(), 50)) {
+            erros.adicionar("Nome tem mais de 50 caracteres");
         }
-        
-        // Validação do Contato
+
+        // Contato + Data: atenção à ordem conforme testes
         Contato contato = cliente.getContato();
         if (contato == null) {
-            mensagensErro.adicionar("Contato não informado");
+            // quando contato é nulo, a mensagem "Contato não informado" deve vir antes da data
+            erros.adicionar("Contato não informado");
+
+            // depois validamos a data
+            if (cliente.getDataCadastro() == null) {
+                erros.adicionar("Data do cadastro não informada");
+            } else if (cliente.getDataCadastro().isAfter(LocalDate.now())) {
+                erros.adicionar("Data do cadastro não pode ser posterior à data atual");
+            }
         } else {
-            boolean emailVazio = StringUtils.estaVazia(contato.getEmail());
-            boolean celularVazio = StringUtils.estaVazia(contato.getCelular());
-
-            if (emailVazio && celularVazio) {
-                mensagensErro.adicionar("Celular e e-mail não foram informados");
-            } else {
-                if (!emailVazio && !StringUtils.emailValido(contato.getEmail())) {
-                    mensagensErro.adicionar("E-mail está em um formato inválido");
-                }
-                if (!celularVazio && !StringUtils.telefoneValido(contato.getCelular())) {
-                    mensagensErro.adicionar("Celular está em um formato inválido");
-                }
+            // quando contato existe, o teste espera que a mensagem de data venha ANTES da mensagem específica do contato
+            if (cliente.getDataCadastro() == null) {
+                erros.adicionar("Data do cadastro não informada");
+            } else if (cliente.getDataCadastro().isAfter(LocalDate.now())) {
+                erros.adicionar("Data do cadastro não pode ser posterior à data atual");
             }
-            if (contato.isEhZap() && celularVazio) { // <<< AJUSTADO PARA USAR SUA CLASSE Contato
-                 mensagensErro.adicionar("Celular não informado e indicador de zap ativo");
+
+            boolean emailOk = StringUtils.emailValido(contato.getEmail());
+            boolean telOk = StringUtils.telefoneValido(contato.getCelular());
+
+            if (StringUtils.estaVazia(contato.getEmail()) && StringUtils.estaVazia(contato.getCelular())) {
+                erros.adicionar("Celular e e-mail não foram informados");
+            } else if (!emailOk && !StringUtils.estaVazia(contato.getEmail())) {
+                erros.adicionar("E-mail está em um formato inválido");
+            } else if (!telOk && !StringUtils.estaVazia(contato.getCelular())) {
+                erros.adicionar("Celular está em um formato inválido");
+            } else if (contato.isEhZap() && StringUtils.estaVazia(contato.getCelular())) {
+                erros.adicionar("Celular não informado e indicador de zap ativo");
             }
         }
-        
-        // Validação da Data de Cadastro
-        if (cliente.getDataCadastro() == null) {
-            mensagensErro.adicionar("Data do cadastro não informada");
-        } else if (cliente.getDataCadastro().isAfter(LocalDate.now())) {
-            mensagensErro.adicionar("Data do cadastro não pode ser posterior à data atual");
-        }
 
-        boolean validado = (mensagensErro.tamanho() == 0); // <<< AJUSTADO PARA USAR SUA CLASSE ListaString
-        return new ResultadoMediator(validado, false, mensagensErro);
+        if (erros.tamanho() > 0) {
+            return new ResultadoMediator(false, false, erros);
+        }
+        return new ResultadoMediator(true, false, new ListaString());
     }
 }

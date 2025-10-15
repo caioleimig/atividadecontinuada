@@ -1,15 +1,20 @@
 package br.edu.cs.poo.ac.ordem.entidades;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
+@AllArgsConstructor
 @Getter
 @Setter
-@AllArgsConstructor
-public class OrdemServico {
+
+public class OrdemServico implements Serializable {
+
     private Cliente cliente;
     private PrecoBase precoBase;
     private Notebook notebook;
@@ -19,28 +24,31 @@ public class OrdemServico {
     private double valor;
 
     public LocalDate getDataEstimadaEntrega() {
-        return dataHoraAbertura.toLocalDate().plusDays(prazoEmDias);
+
+        LocalDate dataAbertura = dataHoraAbertura.toLocalDate();
+
+        return dataAbertura.plusDays(prazoEmDias);
     }
 
     public String getNumero() {
-        String tipo = notebook != null ? notebook.getIdTipo() : desktop.getIdTipo();
-        String data = String.format("%04d%02d%02d%02d%02d",
-                dataHoraAbertura.getYear(),
-                dataHoraAbertura.getMonthValue(),
-                dataHoraAbertura.getDayOfMonth(),
-                dataHoraAbertura.getHour(),
-                dataHoraAbertura.getMinute());
 
-        String cpfCnpj = cliente.getCpfCnpj();
-        if (cpfCnpj.length() == 14) { // CNPJ
-            return tipo + data + cpfCnpj;
-        } else { // CPF
-            return dataHoraAbertura.getMonthValue() +
-                   "" + dataHoraAbertura.getYear() +
-                   "" + dataHoraAbertura.getDayOfMonth() +
-                   "" + dataHoraAbertura.getHour() +
-                   "" + dataHoraAbertura.getMinute() +
-                   "000" + cpfCnpj;
+        String concatenacao = "";
+        if (notebook != null) {
+            concatenacao += notebook.getIdTipo();
+        } else{
+            concatenacao += desktop.getIdTipo();
         }
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
+        concatenacao += dataHoraAbertura.format(formatter);
+
+        if (cliente.getCpfCnpj().length() > 11) {
+            concatenacao += cliente.getCpfCnpj();
+        } else {
+            concatenacao += "000" + cliente.getCpfCnpj();
+        }
+
+        return concatenacao;
     }
+
 }

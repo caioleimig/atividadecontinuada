@@ -1,12 +1,14 @@
 package br.edu.cs.poo.ac.ordem.entidades;
 
-public enum TipoOrdem {
+import java.io.Serializable;
+
+public enum TipoOrdem implements Serializable {
     MANUTENCAO(1, "Manutenção"),
     CONFIGURACAO(2, "Configuração"),
     UPGRADE(3, "Upgrade");
 
-    private final int codigo;
-    private final String nome;
+    private int codigo;
+    private String nome;
 
     private TipoOrdem(int codigo, String nome) {
         this.codigo = codigo;
@@ -22,11 +24,15 @@ public enum TipoOrdem {
     }
 
     public static TipoOrdem getTipoOrdem(int codigo) {
-        for (TipoOrdem t : TipoOrdem.values()) {
-            if (t.getCodigo() == codigo) {
-                return t;
+
+        for (TipoOrdem tipo : TipoOrdem.values()) {
+            if (codigo == tipo.getCodigo()) {
+                return tipo;
             }
         }
-        return null; 
+
+        return null;
+
     }
+
 }

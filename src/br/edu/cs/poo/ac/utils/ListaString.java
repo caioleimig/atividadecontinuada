@@ -9,7 +9,7 @@ public class ListaString {
         this.tamanho = 0;
     }
     public int tamanho() {
-    	return tamanho;
+        return tamanho;
     }
     public void adicionar(String str) {
         ElementoListaString novo = new ElementoListaString(str, null);
@@ -45,5 +45,16 @@ public class ListaString {
             atual = atual.getProximo();
         }
         return resultado;
+    }
+
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        ElementoListaString cur = primeiro;
+        while(cur != null) {
+            sb.append(cur.getConteudo());
+            sb.append('\n');
+            cur = cur.getProximo();
+        }
+        return sb.toString();
     }
 }

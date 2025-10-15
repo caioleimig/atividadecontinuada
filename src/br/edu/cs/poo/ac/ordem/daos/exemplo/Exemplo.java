@@ -15,8 +15,8 @@ public class Exemplo implements Serializable {
 		}
 		public void setNome(String nome) {
 			this.nome = nome;
-		}		
+		}
 		public String getCodigo() {
 			return codigo;
-		}		
+		}
 }

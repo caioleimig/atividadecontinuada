@@ -1,11 +1,15 @@
 package br.edu.cs.poo.ac.ordem.entidades;
 
-public class Contato {
+import java.io.Serializable;
+
+public class Contato implements Serializable {
+
     private String email;
     private String celular;
     private boolean ehZap;
 
     public Contato(String email, String celular, boolean ehZap) {
+        super();
         this.email = email;
         this.celular = celular;
         this.ehZap = ehZap;
